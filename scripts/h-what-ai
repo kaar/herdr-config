@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0") [pane_id]
+
+Extended version of h-what: shows what the agent in the focused pane
+is doing right now, then asks pi for a short plain-language summary of
+the current status and what is being worked on.
+
+Arguments:
+    pane_id       Inspect a specific pane (default: focused pane)
+
+Options:
+    -h, --help    Show this help message
+
+Environment:
+    H_WHAT_AI_MODEL   Model pattern passed to pi --model (optional)
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+command -v pi >/dev/null || { echo "pi not found" >&2; exit 1; }
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+h_what="$script_dir/h-what"
+[[ -x "$h_what" ]] || { echo "h-what not found at $h_what" >&2; exit 1; }
+
+bold=""
+dim=""
+reset=""
+if [[ -t 1 ]]; then
+    bold=$(tput bold)
+    dim=$(tput dim)
+    reset=$(tput sgr0)
+fi
+
+width=$(tput cols 2>/dev/null || echo 80)
+wrap=$((width - 4))
+((wrap < 40)) && wrap=40
+
+# Capture h-what output. stdin from /dev/null makes its trailing
+# "press any key" read return immediately; strip that footer line.
+raw=$("$h_what" "$@" </dev/null | sed '/\[press any key to close\]/d')
+
+printf '%s\n' "$raw"
+
+printf '\n%sAI summary%s\n' "$bold" "$reset"
+[[ -t 1 ]] && printf '%s  thinking...%s\r' "$dim" "$reset" || true
+
+prompt="Below is a status dump of a coding agent pane (agent state, last prompt, \
+current tool activity, latest reply). Write a short description (2-4 sentences, \
+plain prose, no markdown, no preamble) of what the current status is and what \
+is being worked on. If the agent is idle, say what was last accomplished.
+
+$raw"
+
+summary=$(pi -p --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-context-files \
+    ${H_WHAT_AI_MODEL:+--model "$H_WHAT_AI_MODEL"} \
+    "$prompt" 2>/dev/null) || summary=""
+
+[[ -t 1 ]] && printf '%*s\r' "$width" "" || true
+if [[ -n "$summary" ]]; then
+    fold -s -w "$wrap" <<<"$summary" | sed 's/^/  /'
+else
+    echo "  (pi summary failed)"
+fi
+
+printf '\n%s[press any key to close]%s' "$dim" "$reset"
+read -rsn1 || true

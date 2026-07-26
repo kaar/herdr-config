@@ -185,7 +185,7 @@ height = "20%"
 [[keys.command]]
 key = "prefix+i"
 type = "popup"
-command = "$HOME/.config/herdr/scripts/h-what"
+command = "$HOME/.config/herdr/scripts/h-what-ai"
 description = "what is this agent doing"
 width = "70%"
 height = "70%"
