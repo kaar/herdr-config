@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+[[ -z "${DEV:-}" ]] && echo "DEV not set" >&2 && exit 1
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0")
+
+List projects in \$DEV/ and focus or create a herdr space for the selected one.
+Projects map to herdr spaces (workspaces) by name: \$DEV/<name> <-> space labeled <name>.
+
+Options:
+    -h, --help    Show this help message
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+projects=$(find -L "$DEV" -mindepth 1 -maxdepth 1 -type d | sort)
+[[ -z "${projects}" ]] && echo "No projects found in $DEV" >&2 && exit 1
+
+workspaces_json=$(herdr workspace list 2>/dev/null || echo '{}')
+existing_labels=$(jq -r '.result.workspaces[]?.label' <<<"$workspaces_json")
+
+selected=$(echo "$projects" | while read -r dir; do
+    name=$(basename "$dir")
+    if echo "$existing_labels" | grep -qx "$name"; then
+        echo "● $name"
+    else
+        echo "  $name"
+    fi
+done | sort -r | fzf --reverse --header "Select project (● = active space)" \
+    --preview 't-preview {}' \
+    --preview-window=right:50%:wrap)
+[[ -z "$selected" ]] && exit 0
+
+space_name="${selected:2}"
+project_path="$DEV/$space_name"
+
+workspace_id=$(jq -r --arg label "$space_name" \
+    '.result.workspaces[]? | select(.label == $label) | .workspace_id' \
+    <<<"$workspaces_json" | head -n1)
+
+if [[ -n "$workspace_id" ]]; then
+    herdr workspace focus "$workspace_id" >/dev/null
+else
+    herdr workspace create --cwd "$project_path" --label "$space_name" --focus
+fi

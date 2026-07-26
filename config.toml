@@ -154,10 +154,20 @@ close_tab = ["prefix+shift+x", "prefix+ampersand"]
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
-command = "h-open"
+command = "$HOME/.config/herdr/bin/h-open"
 description = "h-open space picker"
 width = "75%"
 height = "80%"
+
+# h-agent: prompt for a name, create a tab with that label in the current
+# space, and start pi with the same session name (shows under agents)
+[[keys.command]]
+key = "prefix+a"
+type = "popup"
+command = "$HOME/.config/herdr/bin/h-agent"
+description = "new pi agent tab"
+width = "50%"
+height = "20%"
 
 # tmux: bind t -> display-popup tp wt
 [[keys.command]]
