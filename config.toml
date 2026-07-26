@@ -78,6 +78,17 @@ last_pane = "prefix+ctrl+space"
 # tmux default prefix+d -> detach (keep herdr's prefix+q too)
 detach = ["prefix+q", "prefix+d"]
 
+# tmux: bind -n C-h/C-j/C-k/C-l -> select-pane -L/-D/-U/-R
+# Direct (prefix-less) pane navigation. The prefix+ chords stay as fallback.
+# Note: herdr swallows these before the pane app, so ctrl+l (clear), ctrl+k
+# (readline kill-to-EOL) and ctrl+h (backspace in some apps) no longer reach
+# the shell/agent. Use prefix+h/j/k/l only and drop the ctrl+ entries to get
+# them back.
+focus_pane_left = ["prefix+h", "ctrl+h"]
+focus_pane_down = ["prefix+j", "ctrl+j"]
+focus_pane_up = ["prefix+k", "ctrl+k"]
+focus_pane_right = ["prefix+l", "ctrl+l"]
+
 # tmux default prefix+, -> rename window (tab)
 rename_tab = ["prefix+shift+t", "prefix+comma"]
 
