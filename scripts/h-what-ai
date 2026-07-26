@@ -18,7 +18,8 @@ Options:
     -h, --help    Show this help message
 
 Environment:
-    H_WHAT_AI_MODEL   Model pattern passed to pi --model (optional)
+    H_WHAT_AI_MODEL   Model pattern passed to pi --model
+                      (default: anthropic/claude-haiku-4-5)
 EOF
 }
 
@@ -55,16 +56,22 @@ printf '%s\n' "$raw"
 printf '\n%sAI summary%s\n' "$bold" "$reset"
 [[ -t 1 ]] && printf '%s  thinking...%s\r' "$dim" "$reset" || true
 
+model="${H_WHAT_AI_MODEL:-anthropic/claude-haiku-4-5}"
+
 prompt="Below is a status dump of a coding agent pane (agent state, last prompt, \
-current tool activity, latest reply). Write a short description (2-4 sentences, \
-plain prose, no markdown, no preamble) of what the current status is and what \
-is being worked on. If the agent is idle, say what was last accomplished.
+current tool activity, latest reply). Describe the current status and what is \
+being worked on. If the agent is idle, say what was last accomplished.
+
+Output format, exactly:
+- Line 1: a summary of at most 80 characters
+- Then, only if genuinely needed: one blank line and 1-2 short sentences of detail
+No markdown, no preamble, nothing else.
 
 $raw"
 
 summary=$(pi -p --no-session --no-tools --no-extensions --no-skills \
     --no-prompt-templates --no-context-files \
-    ${H_WHAT_AI_MODEL:+--model "$H_WHAT_AI_MODEL"} \
+    --model "$model" --thinking off \
     "$prompt" 2>/dev/null) || summary=""
 
 [[ -t 1 ]] && printf '%*s\r' "$width" "" || true
