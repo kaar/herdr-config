@@ -150,11 +150,12 @@ close_tab = ["prefix+shift+x", "prefix+ampersand"]
 # height = "80%"
 
 # tmux: bind f -> display-popup t-open
+# herdr equivalent: h-open maps $DEV/<project> dirs to herdr spaces
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
-command = "t-open"
-description = "t-open session picker"
+command = "h-open"
+description = "h-open space picker"
 width = "75%"
 height = "80%"
 
