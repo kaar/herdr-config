@@ -180,6 +180,16 @@ description = "new pi agent tab"
 width = "50%"
 height = "20%"
 
+# h-what: show what the agent in the focused pane is doing right now
+# (reads its pi session: state, last prompt, current tool, latest reply)
+[[keys.command]]
+key = "prefix+i"
+type = "popup"
+command = "$HOME/.config/herdr/scripts/h-what"
+description = "what is this agent doing"
+width = "70%"
+height = "70%"
+
 # tmux: bind t -> display-popup tp wt
 [[keys.command]]
 key = "prefix+t"

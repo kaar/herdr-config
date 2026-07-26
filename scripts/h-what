@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0") [pane_id]
+
+Show what the agent in the focused pane is doing right now.
+Reads the pane's agent session (pi JSONL) and prints the agent state,
+the last prompt, the current tool activity, and the latest reply.
+Falls back to recent terminal output for panes without a session.
+
+Arguments:
+    pane_id       Inspect a specific pane (default: focused pane)
+
+Options:
+    -h, --help    Show this help message
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+command -v herdr >/dev/null || { echo "herdr not found" >&2; exit 1; }
+command -v jq >/dev/null || { echo "jq not found" >&2; exit 1; }
+
+bold=""
+dim=""
+reset=""
+if [[ -t 1 ]]; then
+    bold=$(tput bold)
+    dim=$(tput dim)
+    reset=$(tput sgr0)
+fi
+
+width=$(tput cols 2>/dev/null || echo 80)
+wrap=$((width - 4))
+((wrap < 40)) && wrap=40
+
+heading() {
+    printf '\n%s%s%s\n' "$bold" "$1" "$reset"
+}
+
+body() {
+    # wrap and indent stdin
+    fold -s -w "$wrap" | sed 's/^/  /'
+}
+
+panes_json=$(herdr pane list 2>/dev/null | jq '.result.panes // []')
+
+# Target pane: explicit argument, else the focused pane in the current
+# workspace (excluding this popup's own pane), else any focused pane,
+# else the first agent pane in the workspace.
+target=$(jq -c \
+    --arg want "${1:-}" \
+    --arg ws "${HERDR_WORKSPACE_ID:-}" \
+    --arg self "${HERDR_PANE_ID:-}" '
+    if $want != "" then
+        ([.[] | select(.pane_id == $want)][0]) // empty
+    else
+        [.[] | select(.pane_id != $self)] as $p |
+        ([$p[] | select(.focused and ($ws == "" or .workspace_id == $ws))][0]) //
+        ([$p[] | select(.focused)][0]) //
+        ([$p[] | select(.agent != null and ($ws == "" or .workspace_id == $ws))][0]) //
+        ([$p[] | select(.agent != null)][0]) // empty
+    end' <<<"$panes_json")
+[[ -z "$target" ]] && echo "No matching pane found" >&2 && exit 1
+
+pane_id=$(jq -r '.pane_id' <<<"$target")
+agent=$(jq -r '.agent // "no agent"' <<<"$target")
+status=$(jq -r '.agent_status // "unknown"' <<<"$target")
+cwd=$(jq -r '.cwd // ""' <<<"$target")
+title=$(jq -r '.terminal_title_stripped // .terminal_title // ""' <<<"$target")
+session_file=$(jq -r '.agent_session.value // empty' <<<"$target")
+
+icon="○"
+[[ "$status" == "working" ]] && icon="●"
+
+printf '%s%s %s — %s%s\n' "$bold" "$icon" "$agent" "$status" "$reset"
+printf '%s  pane %s · %s%s\n' "$dim" "$pane_id" "$title" "$reset"
+printf '%s  cwd  %s%s\n' "$dim" "$cwd" "$reset"
+
+if [[ -n "$session_file" && -r "$session_file" ]]; then
+    session_json=$(jq -s '.' "$session_file")
+
+    started=$(jq -r '[.[] | select(.type=="session")][0].timestamp // ""' <<<"$session_json")
+    turns=$(jq -r '[.[] | select(.type=="message" and .message.role=="user")] | length' <<<"$session_json")
+    printf '%s  session started %s · %s prompt(s)%s\n' \
+        "$dim" "${started%%.*}" "$turns" "$reset"
+
+    last_prompt=$(jq -r '
+        [.[] | select(.type=="message" and .message.role=="user")] | last
+        | .message.content
+        | if type == "string" then .
+          else ([.[] | select(.type=="text") | .text // empty] | join("\n")) end
+        // ""' <<<"$session_json")
+    if [[ -n "$last_prompt" ]]; then
+        heading "Last prompt"
+        head -c 600 <<<"$last_prompt" | body
+    fi
+
+    if [[ "$status" == "working" ]]; then
+        last_tool=$(jq -r '
+            [.[] | select(.type=="message" and .message.role=="assistant")
+             | .message.content | select(type=="array")
+             | .[] | select(.type=="toolCall")] | last
+            | if . == null then ""
+              else "\(.name)  \(.arguments | tostring | .[0:160])" end' <<<"$session_json")
+        if [[ -n "$last_tool" ]]; then
+            heading "Now running"
+            body <<<"$last_tool"
+        fi
+    fi
+
+    last_reply=$(jq -r '
+        [.[] | select(.type=="message" and .message.role=="assistant")
+         | .message.content
+         | if type == "string" then .
+           else ([.[] | select(.type=="text") | .text // empty] | join("\n")) end
+         | select(length > 0)] | last // ""' <<<"$session_json")
+    if [[ -n "$last_reply" ]]; then
+        heading "Latest reply"
+        head -c 1200 <<<"$last_reply" | body
+    fi
+else
+    heading "Recent output"
+    herdr pane read "$pane_id" --lines 25 2>/dev/null | sed 's/^/  /' ||
+        echo "  (unable to read pane output)"
+fi
+
+printf '\n%s[press any key to close]%s' "$dim" "$reset"
+read -rsn1 || true
