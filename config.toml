@@ -165,7 +165,7 @@ close_tab = ["prefix+shift+x", "prefix+ampersand"]
 [[keys.command]]
 key = "prefix+f"
 type = "popup"
-command = "$HOME/.config/herdr/bin/h-open"
+command = "$HOME/.config/herdr/scripts/h-open"
 description = "h-open space picker"
 width = "75%"
 height = "80%"
@@ -175,7 +175,7 @@ height = "80%"
 [[keys.command]]
 key = "prefix+a"
 type = "popup"
-command = "$HOME/.config/herdr/bin/h-agent"
+command = "$HOME/.config/herdr/scripts/h-agent"
 description = "new pi agent tab"
 width = "50%"
 height = "20%"
