@@ -25,3 +25,8 @@ Requirements: `fzf`, `jq`, `$DEV` set (`h-open`), `t-preview` on `$PATH` for the
 `h-open` preview pane, `pi` (`h-agent`), and `jq` (`h-what`).
 
 To run them from a shell too, add `~/.config/herdr/scripts` to `$PATH`.
+
+## References
+
+- [GitHub](https://github.com/ogulcancelik/herdr)
+- [herdr - Docs](https://herdr.dev/docs).
