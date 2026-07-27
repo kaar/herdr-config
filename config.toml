@@ -201,15 +201,6 @@ type = "plugin_action"
 command = "fzf-url"
 description = "fzf open URL from pane"
 
-# tmux: bind t -> display-popup tp wt
-[[keys.command]]
-key = "prefix+t"
-type = "popup"
-command = "tp wt"
-description = "tp worktree picker"
-width = "75%"
-height = "80%"
-
 # break-pane (move focused pane into its own new tab)
 [[keys.command]]
 key = "prefix+!"
