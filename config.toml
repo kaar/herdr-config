@@ -75,7 +75,9 @@ next_tab = ["prefix+n", "alt+l"]
 
 # tmux: bind C-Space last-window -> closest herdr equivalent is last_pane
 # (jumps back to the last focused pane across tabs/workspaces)
-last_pane = "prefix+ctrl+space"
+# NB: prefix is ctrl+space, so "prefix+ctrl+space" is prefix-twice (reserved
+# for a literal prefix key) -> use plain space after the prefix instead.
+last_pane = "prefix+space"
 
 # detach (prefix+d is reused by a custom command below, so keep only prefix+q)
 detach = "prefix+q"
