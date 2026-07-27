@@ -172,16 +172,6 @@ description = "h-open space picker"
 width = "75%"
 height = "80%"
 
-# h-agent: prompt for a name, create a tab with that label in the current
-# space, and start pi with the same session name (shows under agents)
-[[keys.command]]
-key = "prefix+a"
-type = "popup"
-command = "$HOME/.config/herdr/scripts/h-agent"
-description = "new pi agent tab"
-width = "50%"
-height = "20%"
-
 # h-what: show what the agent in the focused pane is doing right now
 # (reads its pi session: state, last prompt, current tool, latest reply)
 [[keys.command]]
