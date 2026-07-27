@@ -4,12 +4,12 @@ set -o nounset
 set -o pipefail
 
 # Clone (or update) the Herdr repository so its documentation is available
-# offline. The docs are Apache-2.0 source Markdown living inside the main
-# repo under website/src/content/docs/. See docs/research/herdr-offline-docs.md.
+# offline inside this skill. The docs are Apache-2.0 source Markdown living
+# inside the main repo under website/src/content/docs/.
 
 REPO_URL="https://github.com/ogulcancelik/herdr"
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST="${HERDR_DOCS_DIR:-$REPO_ROOT/vendor/herdr}"
+SKILL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEST="${HERDR_DOCS_DIR:-$SKILL_ROOT/vendor/herdr}"
 DOCS_SUBPATH="website/src/content/docs"
 
 show_help() {
@@ -27,7 +27,7 @@ Options:
 
 Environment:
     HERDR_DOCS_DIR   Override clone destination
-                     (default: $REPO_ROOT/vendor/herdr)
+                     (default: $SKILL_ROOT/vendor/herdr)
 EOF
 }
 

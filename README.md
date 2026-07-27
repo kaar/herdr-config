@@ -26,6 +26,29 @@ Requirements: `fzf`, `jq`, `$DEV` set (`h-open`), `t-preview` on `$PATH` for the
 
 To run them from a shell too, add `~/.config/herdr/scripts` to `$PATH`.
 
+## Skills
+
+Agent skills live under `skills/`.
+
+### herdr-docs
+
+Reads Herdr's official documentation offline so agents answer Herdr questions
+from the docs instead of guessing. It clones the Herdr repo on demand into
+`skills/herdr-docs/vendor/herdr/` (git-ignored).
+
+Install it into your agent with the
+[`skills`](https://github.com/vercel-labs/skills) CLI:
+
+```sh
+# Install the herdr-docs skill from this repo
+npx skills add kaar/herdr-config
+
+# List available skills without installing
+npx skills add kaar/herdr-config --list
+```
+
+See `skills/herdr-docs/SKILL.md` for the full workflow.
+
 ## References
 
 - [GitHub](https://github.com/ogulcancelik/herdr)

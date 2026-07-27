@@ -4,4 +4,3 @@ herdr-server.log
 herdr.sock
 session.json
 .plugins.lock
-vendor/herdr/
