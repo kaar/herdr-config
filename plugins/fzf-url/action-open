@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Plugin action: runs without a TTY, so it opens a session-modal popup pane
+# that runs the fzf picker. The focused pane id is forwarded to the popup
+# through SOURCE_PANE_ID, since popup panes do not receive HERDR_PANE_ID.
+
+herdr="${HERDR_BIN_PATH:-herdr}"
+plugin="${HERDR_PLUGIN_ID:-kaar.fzf-url}"
+
+# Plugin actions receive HERDR_PANE_ID (focused pane). HERDR_ACTIVE_PANE_ID is
+# only set for [[keys.command]] custom commands, so try it too. Fall back to
+# the focused pane from the invocation context, then the pane list.
+pane_id="${HERDR_PANE_ID:-${HERDR_ACTIVE_PANE_ID:-}}"
+if [[ -z "$pane_id" && -n "${HERDR_PLUGIN_CONTEXT_JSON:-}" ]] && command -v jq >/dev/null; then
+    pane_id=$(jq -r '.focused_pane_id // .focused_pane.pane_id // .pane.pane_id // empty' <<<"$HERDR_PLUGIN_CONTEXT_JSON" 2>/dev/null)
+fi
+if [[ -z "$pane_id" ]] && command -v jq >/dev/null; then
+    pane_id=$("$herdr" pane list 2>/dev/null |
+        jq -r '[.result.panes[]? | select(.focused)][0].pane_id // empty')
+fi
+[[ -z "$pane_id" ]] && echo "fzf-url: no focused pane" >&2 && exit 1
+
+"$herdr" plugin pane open \
+    --plugin "$plugin" \
+    --entrypoint picker \
+    --placement popup \
+    --env "SOURCE_PANE_ID=$pane_id"

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# fzf picker (runs in a popup pane): extract URLs from the source pane, then
+# open or copy the selection. Enter opens, ctrl-y copies, tab multi-selects.
+#
+#   SOURCE_PANE_ID  pane to scan (set by the action)
+#   H_URL_LINES     scrollback lines to scan (default: 2000)
+#   H_URL_OPENER    override the opener (default: open / xdg-open)
+
+herdr="${HERDR_BIN_PATH:-herdr}"
+pane_id="${SOURCE_PANE_ID:-${HERDR_ACTIVE_PANE_ID:-${HERDR_PANE_ID:-}}}"
+[[ -z "$pane_id" ]] && echo "fzf-url: no target pane" >&2 && exit 1
+
+# A URL may contain punctuation internally but must not end on it, so trailing
+# ')', '.', ',', etc. from prose and markdown links are dropped. The final
+# character class excludes those. Ported from wfxr/tmux-fzf-url.
+url_re='(https?://|www\.)[-A-Za-z0-9._~:/?#@$&*+,;=%!]*[-A-Za-z0-9_/#@$&*+=%~]'
+
+# Extract, dedupe preserving order, then reverse so newest URLs sort on top.
+urls=$(
+    "$herdr" pane read "$pane_id" --source recent-unwrapped --lines "${H_URL_LINES:-2000}" 2>/dev/null |
+        grep -oE "$url_re" | awk '!seen[$0]++' | { tac 2>/dev/null || tail -r; }
+)
+[[ -z "$urls" ]] && echo "fzf-url: no URLs found" >&2 && exit 0
+
+# --expect reports the pressed key (ctrl-y or empty for Enter) on the first
+# output line; the selected URLs follow.
+selection=$(fzf --multi --expect=ctrl-y --prompt='   ' \
+    --border-label=' Open URL ' --height=100% --reverse <<<"$urls") || exit 0
+
+key=$(head -n1 <<<"$selection")
+chosen=$(tail -n +2 <<<"$selection")
+[[ -z "$chosen" ]] && exit 0
+
+if [[ "$key" == "ctrl-y" ]]; then
+    if command -v pbcopy >/dev/null; then printf '%s\n' "$chosen" | pbcopy
+    elif command -v wl-copy >/dev/null; then printf '%s\n' "$chosen" | wl-copy
+    elif command -v xclip >/dev/null; then printf '%s\n' "$chosen" | xclip -selection clipboard
+    elif command -v xsel >/dev/null; then printf '%s\n' "$chosen" | xsel --clipboard --input
+    else echo "fzf-url: no clipboard tool found (pbcopy/wl-copy/xclip/xsel)" >&2; exit 1; fi
+else
+    while IFS= read -r url; do
+        [[ -z "$url" ]] && continue
+        if [[ -n "${H_URL_OPENER:-}" ]]; then $H_URL_OPENER "$url"
+        elif command -v open >/dev/null; then open "$url"
+        elif command -v xdg-open >/dev/null; then xdg-open "$url"
+        else echo "fzf-url: no opener found (open/xdg-open)" >&2; exit 1; fi
+    done <<<"$chosen"
+fi

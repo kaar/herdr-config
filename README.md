@@ -26,6 +26,31 @@ Requirements: `fzf`, `jq`, `$DEV` set (`h-open`), `t-preview` on `$PATH` for the
 
 To run them from a shell too, add `~/.config/herdr/scripts` to `$PATH`.
 
+## Plugins
+
+`plugins/` holds local [herdr plugins](https://herdr.dev/docs/plugins/).
+
+### fzf-url
+
+Fuzzy-find and open URLs visible in the active pane, like
+[`wfxr/tmux-fzf-url`](https://github.com/wfxr/tmux-fzf-url). Bound to `prefix+u`
+in `config.toml` via the `fzf-url` plugin action; `Enter` opens the selection,
+`ctrl-y` copies it, `tab` multi-selects.
+
+Install from GitHub:
+
+```sh
+herdr plugin install kaar/herdr-config/plugins/fzf-url
+```
+
+Or link the in-repo copy for local development:
+
+```sh
+herdr plugin link ~/.config/herdr/plugins/fzf-url
+```
+
+See `plugins/fzf-url/README.md` for options and details.
+
 ## Skills
 
 Agent skills live under `skills/`.

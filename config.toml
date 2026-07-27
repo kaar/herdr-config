@@ -193,13 +193,13 @@ width = "70%"
 height = "70%"
 
 # tmux: prefix + u (tmux-fzf-url) -> fuzzy-find and open URLs from the pane
+# Provided by the local fzf-url plugin (plugins/fzf-url).
+# Install once: herdr plugin install kaar/herdr-config/plugins/fzf-url
 [[keys.command]]
 key = "prefix+u"
-type = "popup"
-command = "$HOME/.config/herdr/scripts/h-url"
+type = "plugin_action"
+command = "fzf-url"
 description = "fzf open URL from pane"
-width = "60%"
-height = "40%"
 
 # tmux: bind t -> display-popup tp wt
 [[keys.command]]
