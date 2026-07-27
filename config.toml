@@ -24,7 +24,8 @@ name = "gruvbox"
 [theme.custom]
 red = "#ea6962"
 green = "#a9b665"
-accent = "#d8a657"
+# High-contrast accent so the focused pane border stands out against Gruvbox
+accent = "#7daea3"
 
 [terminal]
 # Executable used for new interactive panes.
@@ -275,14 +276,15 @@ tabs = "alt"
 # Ask for a workspace name before interactive creation.
 # prompt_new_workspace_name = false
 
-# Draw borders around split panes.
-# pane_borders = true
+# Draw borders around split panes. Focused pane border uses the accent color;
+# others are dimmed, so this is the primary "which pane is selected" cue.
+pane_borders = true
 
 # Keep split panes visually separated instead of sharing divider borders.
 pane_gaps = false
 
 # Show detected/reported agent labels in split pane borders when no manual pane name is set.
-# show_agent_labels_on_pane_borders = false
+show_agent_labels_on_pane_borders = true
 
 # Hide the tab row when a workspace has exactly one tab.
 # New tabs can still be created with the configured keybinding.
