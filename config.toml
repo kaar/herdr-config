@@ -9,7 +9,8 @@
 # Built-in themes: catppuccin, terminal, tokyo-night, dracula, nord,
 #                  gruvbox, one-dark, solarized, kanagawa, rose-pine,
 #                  vesper
-# name = "catppuccin"
+# Match Ghostty theme (Gruvbox Material Dark)
+name = "gruvbox"
 
 # Follow host terminal light/dark appearance and switch Herdr UI themes.
 # Existing manual behavior is unchanged unless this is true.
@@ -19,11 +20,11 @@
 
 # Override individual color tokens on top of the base theme.
 # Accepts: hex (#rrggbb), named colors, rgb(r,g,b), or panel_bg = "reset"
-# [theme.custom]
-# panel_bg = "reset"
-# accent = "#f5c2e7"
-# red = "#ff6188"
-# green = "#a6e3a1"
+# Tuned to the Gruvbox Material Dark palette used by Ghostty.
+[theme.custom]
+red = "#ea6962"
+green = "#a9b665"
+accent = "#d8a657"
 
 [terminal]
 # Executable used for new interactive panes.
