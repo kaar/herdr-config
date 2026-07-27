@@ -200,6 +200,13 @@ description = "tp worktree picker"
 width = "75%"
 height = "80%"
 
+# break-pane (move focused pane into its own new tab)
+[[keys.command]]
+key = "prefix+!"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane move \"$HERDR_ACTIVE_PANE_ID\" --new-tab --focus"
+description = "break pane into new tab"
+
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
 # tmux: bind -n M-1..M-9 -> select-window (direct alt+1..9 tab switching,
