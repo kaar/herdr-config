@@ -77,8 +77,8 @@ next_tab = ["prefix+n", "alt+l"]
 # (jumps back to the last focused pane across tabs/workspaces)
 last_pane = "prefix+ctrl+space"
 
-# tmux default prefix+d -> detach (keep herdr's prefix+q too)
-detach = ["prefix+q", "prefix+d"]
+# detach (prefix+d is reused by a custom command below, so keep only prefix+q)
+detach = "prefix+q"
 
 # tmux: bind -n C-h/C-j/C-k/C-l -> select-pane -L/-D/-U/-R
 # Direct (prefix-less) pane navigation. The prefix+ chords stay as fallback.
