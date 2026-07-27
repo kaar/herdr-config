@@ -55,6 +55,20 @@ See `plugins/fzf-url/README.md` for options and details.
 
 Agent skills live under `skills/`.
 
+### herdr
+
+Teaches an agent to operate Herdr itself from inside a pane: inspect
+workspaces/tabs/panes, split panes and run commands without stealing focus,
+read pane output, wait for servers or tests, and start helper agents in
+sibling panes. It refuses to act unless `HERDR_ENV=1`, so an agent outside a
+Herdr-managed pane can't control a session it doesn't own.
+
+Not part of this repo — install it from its own source:
+
+```sh
+npx skills add ogulcancelik/herdr --skill herdr -g
+```
+
 ### herdr-docs
 
 Reads Herdr's official documentation offline so agents answer Herdr questions
