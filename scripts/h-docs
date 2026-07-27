@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Clone (or update) the Herdr repository so its documentation is available
+# offline. The docs are Apache-2.0 source Markdown living inside the main
+# repo under website/src/content/docs/. See docs/research/herdr-offline-docs.md.
+
+REPO_URL="https://github.com/ogulcancelik/herdr"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEST="${HERDR_DOCS_DIR:-$REPO_ROOT/vendor/herdr}"
+DOCS_SUBPATH="website/src/content/docs"
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0") [options]
+
+Clone or update the Herdr repository for offline documentation access.
+Docs source lives at: <clone>/$DOCS_SUBPATH
+
+Options:
+    -f, --full    Full clone (all history + version snapshots).
+                  Default is a shallow depth-1 clone of master.
+    -p, --path    Print the docs directory path and exit.
+    -h, --help    Show this help message.
+
+Environment:
+    HERDR_DOCS_DIR   Override clone destination
+                     (default: $REPO_ROOT/vendor/herdr)
+EOF
+}
+
+full=0
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help) show_help; exit 0 ;;
+        -f|--full) full=1 ;;
+        -p|--path) echo "$DEST/$DOCS_SUBPATH"; exit 0 ;;
+        *) echo "Unknown option: $arg" >&2; show_help >&2; exit 1 ;;
+    esac
+done
+
+command -v git >/dev/null || { echo "git not found" >&2; exit 1; }
+
+if [[ -d "$DEST/.git" ]]; then
+    echo "Updating existing clone at $DEST" >&2
+    git -C "$DEST" fetch --all --prune
+    git -C "$DEST" pull --ff-only
+else
+    mkdir -p "$(dirname "$DEST")"
+    if [[ "$full" -eq 1 ]]; then
+        echo "Cloning (full) $REPO_URL -> $DEST" >&2
+        git clone "$REPO_URL" "$DEST"
+    else
+        echo "Cloning (shallow) $REPO_URL -> $DEST" >&2
+        git clone --depth 1 "$REPO_URL" "$DEST"
+    fi
+fi
+
+docs_dir="$DEST/$DOCS_SUBPATH"
+if [[ -d "$docs_dir" ]]; then
+    echo "" >&2
+    echo "Docs available offline at:" >&2
+    echo "  $docs_dir" >&2
+    echo "" >&2
+    echo "English pages:" >&2
+    ls "$docs_dir"/*.mdx 2>/dev/null | xargs -n1 basename | sed 's/^/  /' >&2
+else
+    echo "Warning: expected docs path not found: $docs_dir" >&2
+    exit 1
+fi
