@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0") [pane_id]
+
+Fuzzy-find and open URLs visible in a herdr pane, like tmux-fzf-url.
+Captures the pane's recent scrollback, extracts http(s)/www URLs, and
+shows them in an fzf popup (most recent on top).
+
+Arguments:
+    pane_id       Scan a specific pane (default: HERDR_ACTIVE_PANE_ID,
+                  else the focused pane)
+
+Controls (in the fzf popup):
+    Enter         Open the selected URL(s) in the browser
+    ctrl-y        Copy the selected URL(s) to the clipboard
+    tab           Multi-select several URLs
+
+Options:
+    -h, --help    Show this help message
+
+Environment:
+    H_URL_LINES   Scrollback lines to scan (default: 2000)
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+command -v herdr >/dev/null || { echo "herdr not found" >&2; exit 1; }
+command -v fzf >/dev/null || { echo "fzf not found" >&2; exit 1; }
+
+# Resolve the target pane: explicit arg, else the active tiled pane, else the
+# focused pane from the pane list (popups do not receive HERDR_PANE_ID).
+pane_id="${1:-${HERDR_ACTIVE_PANE_ID:-}}"
+if [[ -z "$pane_id" ]]; then
+    command -v jq >/dev/null || { echo "jq not found" >&2; exit 1; }
+    pane_id=$(herdr pane list 2>/dev/null |
+        jq -r '[.result.panes[]? | select(.focused)][0].pane_id // empty')
+fi
+[[ -z "$pane_id" ]] && echo "No target pane found" >&2 && exit 1
+
+lines="${H_URL_LINES:-2000}"
+
+# Capture scrollback, extract URLs, dedupe preserving order, then reverse so
+# the most recently seen URLs sort to the top of the picker.
+urls=()
+while IFS= read -r line; do
+    urls+=("$line")
+done < <(
+    herdr pane read "$pane_id" --source recent-unwrapped --lines "$lines" 2>/dev/null |
+        grep -oE '(https?://|www\.)[A-Za-z0-9._~:/?#@!$&'\''()*+,;=%-]+' |
+        awk '!seen[$0]++' |
+        tail -r
+)
+
+[[ "${#urls[@]}" -eq 0 ]] && echo "No URLs found in pane $pane_id" >&2 && exit 0
+
+# fzf popup. --expect reports whether ctrl-y (copy) or Enter (open) was pressed
+# on its own first output line; selected URLs follow.
+selection=$(printf '%s\n' "${urls[@]}" |
+    fzf --multi --expect=ctrl-y \
+        --prompt='   ' \
+        --border-label=' Open URL ' \
+        --height=100% --reverse) || exit 0
+
+key=$(head -n1 <<<"$selection")
+chosen=()
+while IFS= read -r line; do
+    [[ -n "$line" ]] && chosen+=("$line")
+done < <(tail -n +2 <<<"$selection")
+[[ "${#chosen[@]}" -eq 0 ]] && exit 0
+
+if [[ "$key" == "ctrl-y" ]]; then
+    command -v pbcopy >/dev/null || { echo "pbcopy not found" >&2; exit 1; }
+    printf '%s\n' "${chosen[@]}" | pbcopy
+else
+    command -v open >/dev/null || { echo "open not found" >&2; exit 1; }
+    for url in "${chosen[@]}"; do
+        open "$url"
+    done
+fi
