@@ -184,6 +184,16 @@ description = "what is this agent doing"
 width = "70%"
 height = "70%"
 
+# h-recap: recap of the agent session in the focused pane, like Claude
+# Code's /recap (session summary, files edited, uncommitted work, commits)
+[[keys.command]]
+key = "prefix+shift+i"
+type = "popup"
+command = "$HOME/.config/herdr/scripts/h-recap"
+description = "recap of this agent session"
+width = "70%"
+height = "80%"
+
 # tmux: prefix + u (tmux-fzf-url) -> fuzzy-find and open URLs from the pane
 # Provided by the local fzf-url plugin (plugins/fzf-url).
 # Install once: herdr plugin install kaar/herdr-config/plugins/fzf-url

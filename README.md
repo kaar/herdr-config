@@ -16,12 +16,13 @@ git clone https://github.com/kaar/herdr-config ~/.config/herdr
 | ----------- | ---------- | -------------------------------------------------------------- |
 | `h-open`    | `prefix+f` | Pick a project in `$DEV/` and focus or create its herdr space  |
 | `h-what-ai` | `prefix+i` | Show what the agent in the focused pane is doing right now     |
+| `h-recap`   | `prefix+shift+i` | Recap of the pane's agent session: summary, files edited, uncommitted work |
 
 Custom commands run through `/bin/sh`, so the bindings reference them as
 `$HOME/.config/herdr/scripts/<script>` — no install step or `$PATH` entry needed.
 
 Requirements: `fzf`, `jq`, `$DEV` set (`h-open`), `t-preview` on `$PATH` for the
-`h-open` preview pane, and `pi` plus `jq` (`h-what-ai`).
+`h-open` preview pane, and `pi` plus `jq` (`h-what-ai`, `h-recap`).
 
 To run them from a shell too, add `~/.config/herdr/scripts` to `$PATH`.
 

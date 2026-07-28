@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+show_help() {
+    cat <<EOF
+Usage: $(basename "$0")
+
+Recap of the agent session in the focused pane, similar to Claude Code's
+/recap. Finds the claude or pi session running in the pane, reads its
+session log, and asks pi for a short recap of what happened and where
+things stand. Also shows files edited this session, uncommitted changes,
+and commits made while the session was running.
+
+Options:
+    -h, --help    Show this help message
+
+Environment:
+    H_RECAP_MODEL   Model pattern passed to pi --model
+                    (default: anthropic/claude-haiku-4-5)
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+command -v herdr >/dev/null || { echo "herdr not found" >&2; exit 1; }
+command -v jq >/dev/null || { echo "jq not found" >&2; exit 1; }
+command -v pi >/dev/null || { echo "pi not found" >&2; exit 1; }
+
+bold=""
+dim=""
+reset=""
+if [[ -t 1 ]]; then
+    bold=$(tput bold)
+    dim=$(tput dim)
+    reset=$(tput sgr0)
+fi
+
+width=$(tput cols 2>/dev/null || echo 80)
+wrap=$((width - 4))
+((wrap < 40)) && wrap=40
+
+heading() {
+    printf '\n%s%s%s\n' "$bold" "$1" "$reset"
+}
+
+body() {
+    # wrap and indent stdin
+    fold -s -w "$wrap" | sed 's/^/  /'
+}
+
+# Popups are not herdr panes and export no HERDR_PANE_ID, so inside the
+# popup `pane current` resolves to the UI-focused pane — the one the
+# popup was opened over.
+target=$(herdr pane current 2>/dev/null | jq -c '.result.pane // empty')
+[[ -z "$target" ]] && echo "No matching pane found" >&2 && exit 1
+
+pane_id=$(jq -r '.pane_id' <<<"$target")
+agent=$(jq -r '.agent // "no agent"' <<<"$target")
+status=$(jq -r '.agent_status // "unknown"' <<<"$target")
+cwd=$(jq -r '.cwd // ""' <<<"$target")
+session_kind=$(jq -r '.agent_session.kind // empty' <<<"$target")
+session_value=$(jq -r '.agent_session.value // empty' <<<"$target")
+
+# Resolve the session log file. pi reports a path directly; claude
+# reports a session id that maps to a JSONL under ~/.claude/projects/.
+session_file=""
+if [[ "$session_kind" == "path" && -r "$session_value" ]]; then
+    session_file="$session_value"
+elif [[ -n "$session_value" ]]; then
+    shopt -s nullglob
+    matches=("$HOME/.claude/projects/"*/"$session_value".jsonl)
+    shopt -u nullglob
+    [[ ${#matches[@]} -gt 0 ]] && session_file="${matches[0]}"
+fi
+
+icon="○"
+[[ "$status" == "working" ]] && icon="●"
+
+# ---------------------------------------------------------------------------
+# Extract session facts (format differs between claude and pi logs)
+# ---------------------------------------------------------------------------
+title=""
+started=""
+prompts_all=""
+last_reply=""
+edited_files=""
+
+if [[ -n "$session_file" ]]; then
+    session_json=$(jq -s '.' "$session_file")
+
+    if [[ "$agent" == "claude" ]]; then
+        title=$(jq -r '[.[] | select(.type=="ai-title") | .aiTitle] | last // ""' <<<"$session_json")
+        started=$(jq -r '[.[] | select(.type=="user") | .timestamp // empty][0] // ""' <<<"$session_json")
+        prompts_all=$(jq -r '
+            [.[] | select(.type=="user" and (.isSidechain != true))
+             | .message.content
+             | if type == "string" then .
+               else ([.[] | select(.type=="text") | .text // empty] | join("\n")) end
+             | select(length > 0)
+             | select(startswith("<") | not)
+             | select(startswith("Caveat:") | not)
+             | .[0:300] | gsub("\\s+"; " ")]
+            | .[]' <<<"$session_json")
+        last_reply=$(jq -r '
+            [.[] | select(.type=="assistant")
+             | .message.content | select(type=="array")
+             | [.[] | select(.type=="text") | .text // empty] | join("\n")
+             | select(length > 0)] | last // ""' <<<"$session_json")
+        edited_files=$(jq -r '
+            [.[] | select(.type=="assistant")
+             | .message.content | select(type=="array")
+             | .[] | select(.type=="tool_use")
+             | select(.name | test("^(Edit|Write|MultiEdit|NotebookEdit)$"))
+             | .input.file_path // .input.notebook_path // empty]
+            | unique | .[]' <<<"$session_json")
+    else
+        started=$(jq -r '[.[] | select(.type=="session")][0].timestamp // ""' <<<"$session_json")
+        prompts_all=$(jq -r '
+            [.[] | select(.type=="message" and .message.role=="user")
+             | .message.content
+             | if type == "string" then .
+               else ([.[] | select(.type=="text") | .text // empty] | join("\n")) end
+             | select(length > 0)
+             | .[0:300] | gsub("\\s+"; " ")]
+            | .[]' <<<"$session_json")
+        last_reply=$(jq -r '
+            [.[] | select(.type=="message" and .message.role=="assistant")
+             | .message.content | select(type=="array")
+             | [.[] | select(.type=="text") | .text // empty] | join("\n")
+             | select(length > 0)] | last // ""' <<<"$session_json")
+        edited_files=$(jq -r '
+            [.[] | select(.type=="message" and .message.role=="assistant")
+             | .message.content | select(type=="array")
+             | .[] | select(.type=="toolCall")
+             | select(.name | test("edit|write"; "i"))
+             | .arguments.file_path // .arguments.path // empty]
+            | unique | .[]' <<<"$session_json")
+    fi
+fi
+
+prompt_count=0
+[[ -n "$prompts_all" ]] && prompt_count=$(wc -l <<<"$prompts_all" | tr -d ' ')
+
+# ---------------------------------------------------------------------------
+# Git facts from the pane's cwd
+# ---------------------------------------------------------------------------
+branch=""
+git_status=""
+git_diffstat=""
+git_commits=""
+if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branch=$(git -C "$cwd" branch --show-current 2>/dev/null || true)
+    git_status=$(git -C "$cwd" status --porcelain 2>/dev/null | head -30 || true)
+    git_diffstat=$(git -C "$cwd" diff --stat HEAD 2>/dev/null | tail -1 | sed 's/^ *//' || true)
+    if [[ -n "$started" ]]; then
+        git_commits=$(git -C "$cwd" log --oneline --since="$started" 2>/dev/null | head -10 || true)
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------------
+printf '%s%s %s — %s%s\n' "$bold" "$icon" "$agent" "$status" "$reset"
+[[ -n "$title" ]] && printf '%s  %s%s\n' "$dim" "$title" "$reset"
+printf '%s  pane %s · %s%s\n' "$dim" "$pane_id" "${branch:+branch $branch · }$cwd" "$reset"
+if [[ -n "$session_file" ]]; then
+    printf '%s  session started %s · %s prompt(s)%s\n' \
+        "$dim" "${started%%.*}" "$prompt_count" "$reset"
+fi
+
+# ---------------------------------------------------------------------------
+# Build the dump for the AI recap
+# ---------------------------------------------------------------------------
+if [[ -n "$session_file" ]]; then
+    # Last 15 prompts (already one truncated line each), oldest first.
+    prompts_dump=$(tail -n 15 <<<"$prompts_all")
+    dump="Session title: ${title:-unknown}
+Agent: $agent · status: $status
+Session started: $started · prompts: $prompt_count
+
+User prompts (oldest to newest, truncated):
+$prompts_dump
+
+Latest assistant reply (truncated):
+$(head -c 1500 <<<"$last_reply")
+
+Files edited/written this session:
+${edited_files:-none}"
+else
+    dump="No session log found; recent terminal output of the pane:
+$(herdr pane read "$pane_id" --lines 60 2>/dev/null || echo '(unable to read pane output)')"
+fi
+
+dump+="
+
+Git branch: ${branch:-not a git repo}
+Uncommitted changes (git status --porcelain):
+${git_status:-none}
+Diffstat vs HEAD: ${git_diffstat:-none}
+Commits made since session start:
+${git_commits:-none}"
+
+# ---------------------------------------------------------------------------
+# AI recap
+# ---------------------------------------------------------------------------
+heading "Recap"
+[[ -t 1 ]] && printf '%s  thinking...%s\r' "$dim" "$reset" || true
+
+model="${H_RECAP_MODEL:-anthropic/claude-haiku-4-5}"
+
+ai_prompt="Below is a data dump about a coding agent session (user prompts, latest \
+reply, files edited, git state). Write a recap of the session for the developer, \
+like Claude Code's /recap feature: what was worked on, what changed, and where \
+things stand now.
+
+Output format, exactly:
+- Line 1: one-sentence headline of what the session accomplished or is doing (max 80 chars)
+- Blank line, then 'What happened:' and 2-6 short bullets starting with '- '
+- Blank line, then 'Where things stand:' and 1-3 bullets starting with '- ' \
+covering uncommitted work, in-progress items, or obvious next steps
+Plain text only. No markdown headers, no preamble, nothing else. Base it only \
+on the dump; do not invent work that is not evidenced.
+
+$dump"
+
+recap=$(pi -p --no-session --no-tools --no-extensions --no-skills \
+    --no-prompt-templates --no-context-files \
+    --model "$model" --thinking off \
+    "$ai_prompt" 2>/dev/null) || recap=""
+
+[[ -t 1 ]] && printf '%*s\r' "$width" "" || true
+if [[ -n "$recap" ]]; then
+    body <<<"$recap"
+else
+    echo "  (pi recap failed)"
+fi
+
+# ---------------------------------------------------------------------------
+# Deterministic detail sections
+# ---------------------------------------------------------------------------
+if [[ -n "$edited_files" ]]; then
+    heading "Files edited this session"
+    sed 's/^/  /' <<<"$edited_files"
+fi
+
+if [[ -n "$git_status" ]]; then
+    heading "Uncommitted changes"
+    sed 's/^/  /' <<<"$git_status"
+    [[ -n "$git_diffstat" ]] && printf '%s  %s%s\n' "$dim" "$git_diffstat" "$reset"
+fi
+
+if [[ -n "$git_commits" ]]; then
+    heading "Commits during session"
+    sed 's/^/  /' <<<"$git_commits"
+fi
+
+printf '\n%s[press any key to close]%s' "$dim" "$reset"
+read -rsn1 || true
