@@ -1,0 +1,42 @@
+# herdr-plugin.toml - manifest for h-nav.
+#
+# Install from GitHub:
+#   herdr plugin install kaar/herdr-config/plugins/h-nav
+#
+# Local development (link does not run build steps):
+#   herdr plugin link ~/.config/herdr/plugins/h-nav
+#
+# Vim-aware directional pane focus (vim-tmux-navigator pattern): bound to
+# direct ctrl+h/j/k/l chords, passes the chord through when the focused
+# pane runs vim/fzf, otherwise moves herdr pane focus.
+
+id = "kaar.h-nav"
+name = "h-nav"
+version = "0.1.0"
+min_herdr_version = "0.7.4"
+description = "Vim-aware ctrl+h/j/k/l pane navigation (vim-tmux-navigator pattern)."
+platforms = ["linux", "macos"]
+
+[[actions]]
+id = "left"
+title = "h-nav: focus pane left (vim-aware)"
+contexts = ["global"]
+command = ["sh", "h-nav", "left"]
+
+[[actions]]
+id = "down"
+title = "h-nav: focus pane down (vim-aware)"
+contexts = ["global"]
+command = ["sh", "h-nav", "down"]
+
+[[actions]]
+id = "up"
+title = "h-nav: focus pane up (vim-aware)"
+contexts = ["global"]
+command = ["sh", "h-nav", "up"]
+
+[[actions]]
+id = "right"
+title = "h-nav: focus pane right (vim-aware)"
+contexts = ["global"]
+command = ["sh", "h-nav", "right"]
