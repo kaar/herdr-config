@@ -74,11 +74,11 @@
   {
     "plugin_id": "kaar.fzf-url",
     "name": "fzf-url",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "min_herdr_version": "0.7.4",
     "description": "Fuzzy-find and open URLs visible in the active pane, like tmux-fzf-url.",
-    "manifest_path": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/fzf-url/herdr-plugin.toml",
-    "plugin_root": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/fzf-url",
+    "manifest_path": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/github/kaar.fzf-url-960a115cc699/herdr-plugin.toml",
+    "plugin_root": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/github/kaar.fzf-url-960a115cc699",
     "enabled": true,
     "platforms": [
       "linux",
@@ -107,12 +107,17 @@
         "height": "40%",
         "command": [
           "bash",
-          "picker"
+          "fzf-url.sh"
         ]
       }
     ],
     "source": {
-      "kind": "local"
+      "kind": "github",
+      "owner": "kaar",
+      "repo": "herdr-fzf-url",
+      "resolved_commit": "9638f2d6dfeaf690995bf3caca7a37a7fd8e7dcc",
+      "managed_path": "/Users/casparnettelbladt/.config/herdr/plugins/github/kaar.fzf-url-960a115cc699",
+      "installed_unix_ms": 1785326278995
     }
   }
 ]

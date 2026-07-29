@@ -28,7 +28,9 @@ To run them from a shell too, add `~/.config/herdr/scripts` to `$PATH`.
 
 ## Plugins
 
-`plugins/` holds local [herdr plugins](https://herdr.dev/docs/plugins/).
+[herdr plugins](https://herdr.dev/docs/plugins/) are installed from GitHub
+with `herdr plugin install`; herdr keeps the installed copies under
+`plugins/github/` (gitignored) and records the resolved set in `plugins.json`.
 
 ### fzf-url
 
@@ -37,19 +39,12 @@ Fuzzy-find and open URLs visible in the active pane, like
 in `config.toml` via the `fzf-url` plugin action; `Enter` opens the selection,
 `ctrl-y` copies it, `tab` multi-selects.
 
-Install from GitHub:
-
 ```sh
-herdr plugin install kaar/herdr-config/plugins/fzf-url
+herdr plugin install kaar/herdr-fzf-url
 ```
 
-Or link the in-repo copy for local development:
-
-```sh
-herdr plugin link ~/.config/herdr/plugins/fzf-url
-```
-
-See `plugins/fzf-url/README.md` for options and details.
+See [`kaar/herdr-fzf-url`](https://github.com/kaar/herdr-fzf-url) for options
+and details.
 
 ## Skills
 
