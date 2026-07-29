@@ -35,8 +35,7 @@ with `herdr plugin install`; herdr keeps the installed copies under
 
 ### fzf-url
 
-Fuzzy-find and open URLs visible in the active pane, like
-[`wfxr/tmux-fzf-url`](https://github.com/wfxr/tmux-fzf-url). Bound to `prefix+u`
+Fuzzy-find and open URLs visible in the active pane. Bound to `prefix+u`
 in `config.toml` via the `fzf-url` plugin action; `Enter` opens the selection,
 `ctrl-y` copies it, `tab` multi-selects.
 
