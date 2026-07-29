@@ -1,6 +1,7 @@
 # herdr-config
 
-Configuration for [herdr](https://herdr.dev).
+Configuration for [herdr](https://herdr.dev)
+([ogulcancelik/herdr](https://github.com/ogulcancelik/herdr)).
 
 ## Install
 
@@ -85,5 +86,5 @@ See `skills/herdr-docs/SKILL.md` for the full workflow.
 
 ## References
 
-- [GitHub](https://github.com/ogulcancelik/herdr)
-- [herdr - Docs](https://herdr.dev/docs).
+- [herdr on GitHub](https://github.com/ogulcancelik/herdr)
+- [herdr docs](https://herdr.dev/docs)
