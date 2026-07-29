@@ -4,7 +4,7 @@ herdr-server.log
 herdr.sock
 session.json
 .plugins.lock
-plugins.json
 # herdr-managed plugin data (config.toml symlinks ~/.config/herdr here)
 plugins/config/
 plugins/state/
+plugins/github/

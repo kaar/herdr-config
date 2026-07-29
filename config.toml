@@ -83,7 +83,7 @@ last_pane = "prefix+space"
 detach = "prefix+q"
 
 # tmux: bind -n C-h/C-j/C-k/C-l -> select-pane -L/-D/-U/-R (vim-aware).
-# The direct ctrl+h/j/k/l chords are bound to the h-nav plugin (plugins/h-nav)
+# The direct ctrl+h/j/k/l chords are bound to the herdr-navigator plugin
 # via [[keys.command]] below (vim-tmux-navigator pattern): vim/fzf panes get
 # the chord passed through, other panes move focus. prefix+h/j/k/l stay
 # as plain always-move fallbacks.
@@ -208,30 +208,30 @@ description = "fzf open URL from pane"
 # vim-tmux-navigator equivalent: ctrl+h/j/k/l move between panes, but the
 # chord is passed through when the focused pane runs vim/fzf. Vim hands
 # navigation back to herdr at its window edge (see nvim-config
-# plugin/herdr_navigator.lua). Logic lives in the local h-nav plugin
-# (plugins/h-nav). Register once: herdr plugin link ~/.config/herdr/plugins/h-nav
+# plugin/herdr_navigator.lua). Logic lives in the herdr-navigator plugin.
+# Install once: herdr plugin install kaar/nvim-herdr-navigator
 [[keys.command]]
 key = "ctrl+h"
 type = "plugin_action"
-command = "kaar.h-nav.left"
+command = "herdr-navigator.left"
 description = "focus pane left (vim-aware)"
 
 [[keys.command]]
 key = "ctrl+j"
 type = "plugin_action"
-command = "kaar.h-nav.down"
+command = "herdr-navigator.down"
 description = "focus pane down (vim-aware)"
 
 [[keys.command]]
 key = "ctrl+k"
 type = "plugin_action"
-command = "kaar.h-nav.up"
+command = "herdr-navigator.up"
 description = "focus pane up (vim-aware)"
 
 [[keys.command]]
 key = "ctrl+l"
 type = "plugin_action"
-command = "kaar.h-nav.right"
+command = "herdr-navigator.right"
 description = "focus pane right (vim-aware)"
 
 # tmux-navigator parity: prefix+ctrl+l sends a literal ctrl+l (clear

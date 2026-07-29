@@ -1,0 +1,118 @@
+[
+  {
+    "plugin_id": "herdr-navigator",
+    "name": "Herdr Navigator",
+    "version": "0.1.0",
+    "min_herdr_version": "0.7.4",
+    "description": "Seamless ctrl+h/j/k/l across herdr panes and Neovim splits.",
+    "manifest_path": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/github/herdr-navigator-3a5a6fa5dfb5/herdr-plugin.toml",
+    "plugin_root": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/github/herdr-navigator-3a5a6fa5dfb5",
+    "enabled": true,
+    "platforms": [
+      "linux",
+      "macos"
+    ],
+    "actions": [
+      {
+        "id": "down",
+        "title": "Navigate down (nvim/herdr)",
+        "contexts": [
+          "global"
+        ],
+        "command": [
+          "sh",
+          "h-nav",
+          "down"
+        ]
+      },
+      {
+        "id": "left",
+        "title": "Navigate left (nvim/herdr)",
+        "contexts": [
+          "global"
+        ],
+        "command": [
+          "sh",
+          "h-nav",
+          "left"
+        ]
+      },
+      {
+        "id": "right",
+        "title": "Navigate right (nvim/herdr)",
+        "contexts": [
+          "global"
+        ],
+        "command": [
+          "sh",
+          "h-nav",
+          "right"
+        ]
+      },
+      {
+        "id": "up",
+        "title": "Navigate up (nvim/herdr)",
+        "contexts": [
+          "global"
+        ],
+        "command": [
+          "sh",
+          "h-nav",
+          "up"
+        ]
+      }
+    ],
+    "source": {
+      "kind": "github",
+      "owner": "kaar",
+      "repo": "nvim-herdr-navigator",
+      "resolved_commit": "3e6024f0e771085913e27f3582dfb073ed13638a",
+      "managed_path": "/Users/casparnettelbladt/.config/herdr/plugins/github/herdr-navigator-3a5a6fa5dfb5",
+      "installed_unix_ms": 1785323289001
+    }
+  },
+  {
+    "plugin_id": "kaar.fzf-url",
+    "name": "fzf-url",
+    "version": "0.1.0",
+    "min_herdr_version": "0.7.4",
+    "description": "Fuzzy-find and open URLs visible in the active pane, like tmux-fzf-url.",
+    "manifest_path": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/fzf-url/herdr-plugin.toml",
+    "plugin_root": "/Users/casparnettelbladt/GitHub/kaar/herdr-config/plugins/fzf-url",
+    "enabled": true,
+    "platforms": [
+      "linux",
+      "macos"
+    ],
+    "actions": [
+      {
+        "id": "fzf-url",
+        "title": "fzf-url: open URL picker",
+        "description": "Scan the active pane for URLs and open an fzf popup to open or copy them.",
+        "contexts": [
+          "workspace"
+        ],
+        "command": [
+          "bash",
+          "action-open"
+        ]
+      }
+    ],
+    "panes": [
+      {
+        "id": "picker",
+        "title": "Open URL",
+        "placement": "popup",
+        "width": "60%",
+        "height": "40%",
+        "command": [
+          "bash",
+          "picker"
+        ]
+      }
+    ],
+    "source": {
+      "kind": "local"
+    }
+  }
+]
