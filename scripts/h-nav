@@ -1,0 +1,38 @@
+#!/bin/sh
+# h-nav: vim-aware directional pane focus — the herdr half of the
+# vim-tmux-navigator pattern (tmux side: `if-shell "$is_vim" send-keys ...`).
+#
+# Bound to direct ctrl+h/j/k/l chords as [[keys.command]] type="shell" in
+# config.toml. When the focused pane's foreground process is vim-like, the
+# chord is passed through to it; nvim's own mapping (nvim-config
+# plugin/herdr_navigator.lua) then calls `herdr pane focus` when a window
+# move hits its layout edge. Otherwise focus moves to the neighbouring
+# herdr pane directly.
+
+set -eu
+
+dir=$1
+case $dir in
+left) key=ctrl+h ;;
+down) key=ctrl+j ;;
+up) key=ctrl+k ;;
+right) key=ctrl+l ;;
+*)
+	echo "usage: h-nav left|down|up|right" >&2
+	exit 2
+	;;
+esac
+
+herdr=${HERDR_BIN_PATH:-herdr}
+pane=${HERDR_ACTIVE_PANE_ID:?h-nav must run as a herdr custom command}
+
+# Same process-name test as vim-tmux-navigator's is_vim ps check, applied
+# to the foreground process names herdr reports for the pane. Matches
+# vi/vim/nvim/gvim/view/lvim/... and fzf (so ctrl+j/k keep moving fzf's
+# selection).
+vim_pattern='"name":"g?\.?(view|l?n?vim?x?|fzf)(diff)?(-wrapped)?"'
+
+if "$herdr" pane process-info --pane "$pane" | grep -qE "$vim_pattern"; then
+	exec "$herdr" pane send-keys "$pane" "$key"
+fi
+exec "$herdr" pane focus --direction "$dir" --pane "$pane"

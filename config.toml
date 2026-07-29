@@ -82,16 +82,18 @@ last_pane = "prefix+space"
 # detach (prefix+d is reused by a custom command below, so keep only prefix+q)
 detach = "prefix+q"
 
-# tmux: bind -n C-h/C-j/C-k/C-l -> select-pane -L/-D/-U/-R
-# Direct (prefix-less) pane navigation. The prefix+ chords stay as fallback.
-# Note: herdr swallows these before the pane app, so ctrl+l (clear), ctrl+k
-# (readline kill-to-EOL) and ctrl+h (backspace in some apps) no longer reach
-# the shell/agent. Use prefix+h/j/k/l only and drop the ctrl+ entries to get
-# them back.
-focus_pane_left = ["prefix+h", "ctrl+h"]
-focus_pane_down = ["prefix+j", "ctrl+j"]
-focus_pane_up = ["prefix+k", "ctrl+k"]
-focus_pane_right = ["prefix+l", "ctrl+l"]
+# tmux: bind -n C-h/C-j/C-k/C-l -> select-pane -L/-D/-U/-R (vim-aware).
+# The direct ctrl+h/j/k/l chords are bound to scripts/h-nav via
+# [[keys.command]] below (vim-tmux-navigator pattern): vim/fzf panes get
+# the chord passed through, other panes move focus. prefix+h/j/k/l stay
+# as plain always-move fallbacks.
+# Note: in shell panes ctrl+l (clear), ctrl+k (kill-to-EOL) and ctrl+h
+# (backspace) still don't reach the shell; prefix+ctrl+l below restores
+# clear-screen, like vim-tmux-navigator's prefix C-l binding.
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
 
 # tmux default prefix+, -> rename window (tab)
 rename_tab = ["prefix+shift+t", "prefix+comma"]
@@ -202,6 +204,42 @@ key = "prefix+u"
 type = "plugin_action"
 command = "fzf-url"
 description = "fzf open URL from pane"
+
+# vim-tmux-navigator equivalent: ctrl+h/j/k/l move between panes, but the
+# chord is passed through when the focused pane runs vim/fzf. Vim hands
+# navigation back to herdr at its window edge (see nvim-config
+# plugin/herdr_navigator.lua). Logic lives in scripts/h-nav.
+[[keys.command]]
+key = "ctrl+h"
+type = "shell"
+command = "$HOME/.config/herdr/scripts/h-nav left"
+description = "focus pane left (vim-aware)"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "shell"
+command = "$HOME/.config/herdr/scripts/h-nav down"
+description = "focus pane down (vim-aware)"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "shell"
+command = "$HOME/.config/herdr/scripts/h-nav up"
+description = "focus pane up (vim-aware)"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "shell"
+command = "$HOME/.config/herdr/scripts/h-nav right"
+description = "focus pane right (vim-aware)"
+
+# tmux-navigator parity: prefix+ctrl+l sends a literal ctrl+l (clear
+# screen) to the pane, since the direct chord is taken by navigation.
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane send-keys \"$HERDR_ACTIVE_PANE_ID\" ctrl+l"
+description = "send ctrl+l (clear screen) to pane"
 
 # break-pane (move focused pane into its own new tab)
 [[keys.command]]
