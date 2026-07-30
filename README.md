@@ -43,8 +43,18 @@ in `config.toml` via the `fzf-url` plugin action; `Enter` opens the selection,
 herdr plugin install kaar/herdr-fzf-url
 ```
 
-See [`kaar/herdr-fzf-url`](https://github.com/kaar/herdr-fzf-url) for options
-and details.
+See [`kaar/herdr-fzf-url`](https://github.com/kaar/herdr-fzf-url) for options and details.
+
+### nvim-herdr-navigator
+
+Seamless `ctrl+h/j/k/l` navigation across herdr panes and Neovim splits
+
+
+```sh
+herdr plugin install kaar/nvim-herdr-navigator
+```
+
+See [`kaar/nvim-herdr-navigator`](https://github.com/kaar/nvim-herdr-navigator) for options and details.
 
 ## Skills
 
