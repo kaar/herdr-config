@@ -1,15 +1,6 @@
-# herdr configuration
-# Place this file at ~/.config/herdr/config.toml
-
-# Show first-run notification setup on startup.
-# Missing also shows onboarding; set false after you've chosen.
-# onboarding = true
+onboarding = false
 
 [theme]
-# Built-in themes: catppuccin, terminal, tokyo-night, dracula, nord,
-#                  gruvbox, one-dark, solarized, kanagawa, rose-pine,
-#                  vesper
-# Match Ghostty theme (Gruvbox Material Dark)
 name = "gruvbox"
 
 # Follow host terminal light/dark appearance and switch Herdr UI themes.
